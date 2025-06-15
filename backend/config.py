@@ -13,4 +13,4 @@ class Config:
     
     # API keys
     OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', 
-                                    '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')
+                                    'Api_KEY_HERE')
