@@ -12,5 +12,5 @@ class Config:
     PORT = int(os.environ.get('FLASK_PORT', 5000))
     
     # API keys
-    OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', 
-                                    'Api_KEY_HERE')
+    # OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', 
+    #                                 'Api_KEY_HERE')
