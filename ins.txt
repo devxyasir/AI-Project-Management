@@ -1,0 +1,28 @@
+🛠️ Project Setup Instructions
+Follow the steps below to set up and run the project on your local machine.
+
+📁 Frontend Setup
+Open a terminal and navigate to the frontend directory:
+cd frontend
+
+Install all required dependencies:
+npm install
+
+Start the frontend development server:
+npm start
+
+🐍 Backend Setup
+Navigate to the backend directory:
+cd backend
+
+Create a virtual environment:
+python -m venv venv
+
+Activate the virtual environment:
+venv\Scripts\activate
+
+Install the required Python packages:
+pip install -r requirements.txt
+
+Start the backend server:
+python app.py

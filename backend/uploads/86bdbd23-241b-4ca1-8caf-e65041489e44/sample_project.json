@@ -1,0 +1,196 @@
+{
+  "nom_projet": "Software Development Project",
+  "responsable": "John Smith",
+  "date_debut": "2025-07-01",
+  "date_fin_prevue": "2025-12-15",
+  "description": "Development of a new customer relationship management system with AI capabilities",
+  "budget": {
+    "montant": 120000,
+    "devise": "USD",
+    "repartition": {
+      "personnel": 70000,
+      "infrastructure": 30000,
+      "logiciels": 15000,
+      "autres": 5000
+    }
+  },
+  "priorite": "Elevée",
+  "taches": [
+    {
+      "id": 1,
+      "nom": "Requirements Analysis",
+      "description": "Gather and document all business requirements for the CRM system",
+      "duree_estimee": 14,
+      "unite_duree": "jours",
+      "predecesseurs": [],
+      "ressources_requises": ["Business Analyst", "Project Manager"],
+      "statut": "terminee"
+    },
+    {
+      "id": 2,
+      "nom": "System Architecture Design",
+      "description": "Design the overall system architecture including databases, APIs, and integrations",
+      "duree_estimee": 10,
+      "unite_duree": "jours",
+      "predecesseurs": [1],
+      "ressources_requises": ["System Architect", "Database Specialist"],
+      "statut": "terminee"
+    },
+    {
+      "id": 3,
+      "nom": "Database Design",
+      "description": "Create detailed database schema and relationships",
+      "duree_estimee": 7,
+      "unite_duree": "jours",
+      "predecesseurs": [2],
+      "ressources_requises": ["Database Specialist", "Data Modeler"],
+      "statut": "en_cours"
+    },
+    {
+      "id": 4,
+      "nom": "Backend Development",
+      "description": "Implement core backend services and API endpoints",
+      "duree_estimee": 20,
+      "unite_duree": "jours",
+      "predecesseurs": [2, 3],
+      "ressources_requises": ["Backend Developer", "API Specialist"],
+      "statut": "non_commencee"
+    },
+    {
+      "id": 5,
+      "nom": "Frontend Development",
+      "description": "Build responsive user interfaces and client-side logic",
+      "duree_estimee": 25,
+      "unite_duree": "jours",
+      "predecesseurs": [2],
+      "ressources_requises": ["Frontend Developer", "UX Designer"],
+      "statut": "non_commencee"
+    },
+    {
+      "id": 6,
+      "nom": "AI Model Integration",
+      "description": "Integrate machine learning models for customer insights and recommendations",
+      "duree_estimee": 15,
+      "unite_duree": "jours",
+      "predecesseurs": [4],
+      "ressources_requises": ["Data Scientist", "Backend Developer"],
+      "statut": "non_commencee"
+    },
+    {
+      "id": 7,
+      "nom": "Testing - Backend",
+      "description": "Perform unit and integration testing on backend services",
+      "duree_estimee": 10,
+      "unite_duree": "jours",
+      "predecesseurs": [4],
+      "ressources_requises": ["QA Engineer", "Backend Developer"],
+      "statut": "non_commencee"
+    },
+    {
+      "id": 8,
+      "nom": "Testing - Frontend",
+      "description": "Perform unit testing and user acceptance testing on frontend components",
+      "duree_estimee": 10,
+      "unite_duree": "jours",
+      "predecesseurs": [5],
+      "ressources_requises": ["QA Engineer", "Frontend Developer"],
+      "statut": "non_commencee"
+    },
+    {
+      "id": 9,
+      "nom": "Integration Testing",
+      "description": "Test all integrated components as a full system",
+      "duree_estimee": 7,
+      "unite_duree": "jours",
+      "predecesseurs": [6, 7, 8],
+      "ressources_requises": ["QA Engineer", "System Integrator"],
+      "statut": "non_commencee"
+    },
+    {
+      "id": 10,
+      "nom": "Performance Optimization",
+      "description": "Improve system performance and scalability",
+      "duree_estimee": 8,
+      "unite_duree": "jours",
+      "predecesseurs": [9],
+      "ressources_requises": ["Performance Engineer"],
+      "statut": "non_commencee"
+    },
+    {
+      "id": 11,
+      "nom": "Security Audit",
+      "description": "Perform security assessment and penetration testing",
+      "duree_estimee": 5,
+      "unite_duree": "jours",
+      "predecesseurs": [9],
+      "ressources_requises": ["Security Specialist"],
+      "statut": "non_commencee"
+    },
+    {
+      "id": 12,
+      "nom": "Documentation",
+      "description": "Create user manuals, API documentation and technical guides",
+      "duree_estimee": 7,
+      "unite_duree": "jours",
+      "predecesseurs": [6, 7, 8],
+      "ressources_requises": ["Technical Writer", "Business Analyst"],
+      "statut": "non_commencee"
+    },
+    {
+      "id": 13,
+      "nom": "Deployment",
+      "description": "Deploy the application to production environment",
+      "duree_estimee": 3,
+      "unite_duree": "jours",
+      "predecesseurs": [10, 11],
+      "ressources_requises": ["DevOps Engineer", "System Administrator"],
+      "statut": "non_commencee"
+    },
+    {
+      "id": 14,
+      "nom": "User Training",
+      "description": "Train end-users on the new system",
+      "duree_estimee": 5,
+      "unite_duree": "jours",
+      "predecesseurs": [12, 13],
+      "ressources_requises": ["Trainer", "Business Analyst"],
+      "statut": "non_commencee"
+    },
+    {
+      "id": 15,
+      "nom": "Post-Launch Support",
+      "description": "Provide dedicated support during the initial weeks after launch",
+      "duree_estimee": 10,
+      "unite_duree": "jours",
+      "predecesseurs": [14],
+      "ressources_requises": ["Support Engineer", "Backend Developer", "Frontend Developer"],
+      "statut": "non_commencee"
+    }
+  ],
+  "risques": [
+    {
+      "id": 1,
+      "nom": "Integration Complexity",
+      "description": "Complex integration with legacy systems may delay development",
+      "impact": "Élevé",
+      "probabilite": "Moyen",
+      "strategie_mitigation": "Perform detailed compatibility assessment early; allocate extra time for integration testing"
+    },
+    {
+      "id": 2,
+      "nom": "Performance Issues",
+      "description": "System may not meet performance requirements under expected load",
+      "impact": "Élevé",
+      "probabilite": "Faible",
+      "strategie_mitigation": "Implement load testing early; have performance engineer involved in architecture design"
+    },
+    {
+      "id": 3,
+      "nom": "Resource Availability",
+      "description": "Key team members may not be available when needed",
+      "impact": "Moyen",
+      "probabilite": "Moyen",
+      "strategie_mitigation": "Cross-train team members; document knowledge base; identify backup resources"
+    }
+  ]
+}
