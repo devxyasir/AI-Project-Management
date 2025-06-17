@@ -59,24 +59,73 @@
   max-height: 500px;
   overflow-y: auto;
   margin-bottom: 20px;
+  padding: 10px;
 }
 
 .message {
-  padding: 10px 15px;
-  margin-bottom: 10px;
-  border-radius: 10px;
-  max-width: 80%;
+  padding: 15px;
+  margin-bottom: 15px;
+  border-radius: 12px;
+  max-width: 85%;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  width: auto;
+  display: inline-block;
 }
 
 .user-message {
   background-color: #f0f0f0;
   align-self: flex-end;
+  margin-left: auto;
+  border-bottom-right-radius: 4px;
 }
 
 .assistant-message {
   background-color: #0d6efd;
   color: white;
   align-self: flex-start;
+  margin-right: auto;
+  border-bottom-left-radius: 4px;
+  line-height: 1.5;
+  font-size: 0.95rem;
+}
+
+/* Improved styling for content inside AI messages */
+.assistant-message p {
+  margin-bottom: 0.8rem;
+}
+
+.assistant-message ul, 
+.assistant-message ol {
+  margin: 0.8rem 0;
+  padding-left: 1.5rem;
+}
+
+.assistant-message li {
+  margin-bottom: 0.5rem;
+}
+
+.message strong {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+.message div {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Format code snippets and tables in responses */
+.assistant-message pre,
+.assistant-message code {
+  background-color: rgba(0,0,0,0.15);
+  padding: 0.2rem 0.4rem;
+  border-radius: 3px;
+  font-family: monospace;
+  font-size: 0.9rem;
+  max-width: 100%;
+  overflow-x: auto;
 }
 
 /* Gantt chart styling */

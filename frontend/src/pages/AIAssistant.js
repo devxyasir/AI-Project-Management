@@ -71,9 +71,22 @@ const AIAssistant = ({ projectData }) => {
       
       if (response.success) {
         // Add assistant response to chat
+        const responseContent = response.response || response.answer; // Handle both response formats (new and old)
+        
+        // Process the response to ensure proper formatting
+        let formattedContent = responseContent;
+        
+        // Ensure response is properly formatted HTML
+        // If it doesn't start with HTML tags and just contains plain text
+        if (!responseContent.trim().startsWith('<')) {
+          formattedContent = `<p>${responseContent}</p>`;
+        }
+        
         const assistantMessage = {
           role: 'assistant',
-          content: response.response,
+          content: formattedContent,
+          isHtml: true, // Flag to indicate HTML content
+          isAI: !response.simulated // Flag to indicate if this is a real AI response or simulated
         };
         
         setChatHistory(prev => [...prev, assistantMessage]);
@@ -88,7 +101,7 @@ const AIAssistant = ({ projectData }) => {
           setError('Using simulated AI responses. For full functionality, please provide an OpenAI API key.');
         }
       } else {
-        setError(response.error || 'Failed to get a response from the AI assistant');
+        setError(response.error || response.message || 'Failed to get a response from the AI assistant');
       }
     } catch (err) {
       console.error('Error asking question:', err);
@@ -125,8 +138,16 @@ const AIAssistant = ({ projectData }) => {
                   key={index}
                   className={`message ${msg.role === 'user' ? 'user-message' : 'assistant-message'}`}
                 >
-                  <strong>{msg.role === 'user' ? 'You' : 'AI Assistant'}:</strong>
-                  <div>{msg.content}</div>
+                  <strong>
+                    {msg.role === 'user' ? 'You' : (
+                      msg.isAI ? 'AI Assistant' : 'Assistant'
+                    )}
+                  </strong>
+                  {msg.isHtml ? (
+                    <div className="message-content" dangerouslySetInnerHTML={{ __html: msg.content }} />
+                  ) : (
+                    <div className="message-content">{msg.content}</div>
+                  )}
                 </div>
               ))
             )}

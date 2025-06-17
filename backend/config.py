@@ -13,4 +13,4 @@ class Config:
     
     # API keys
     OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', 
-                                    'Api_KEY_HERE')
+                                    'API_KEY')

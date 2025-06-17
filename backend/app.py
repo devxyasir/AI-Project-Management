@@ -10,6 +10,7 @@ import base64
 import traceback
 import uuid
 import shutil
+import requests
 from datetime import datetime, timedelta
 from werkzeug.utils import secure_filename
 
@@ -329,44 +330,260 @@ def ask_question():
             }), 400
         
         question = data['question']
+        conversation_id = data.get('conversation_id') or str(uuid.uuid4())
         
         # Check if session ID is provided
         session_id = data.get('session_id', request.cookies.get('project_session_id'))
         
-        # Prepare response based on session data (simulated response)
+        # Get OpenAI API key from config
+        openai_api_key = Config.OPENAI_API_KEY
+        
+        # Check if we have a valid API key
+        use_openai_api = openai_api_key and openai_api_key.startswith('sk-')
+        
+        # Prepare detailed response based on session data
         if session_id and session_id in user_sessions:
             session_data = user_sessions[session_id]
             
-            project_name = session_data.get('parsed_data', {}).get('project_name', 'Untitled Project')
-            task_count = len(session_data.get('parsed_data', {}).get('tasks', []))
-            completion = session_data.get('dashboard_data', {}).get('completion_percentage', 0)
+            # Get project data
+            project_data = session_data.get('project_data', {})
+            parsed_data = session_data.get('parsed_data', {})
+            tasks = parsed_data.get('tasks', [])
+            risks = session_data.get('risks', {})
+            critical_path = session_data.get('critical_path', {})
+            dashboard = session_data.get('dashboard_data', {})
             
-            # Generate a simple response based on the question
-            answer = f"I analyzed the project '{project_name}' with {task_count} tasks. "
+            # Extract specific project details
+            project_name = parsed_data.get('project_name', 'Untitled Project')
+            task_count = len(tasks)
+            completion = dashboard.get('completion_percentage', 0)
+            start_date = dashboard.get('timeline', {}).get('start', 'N/A')
+            end_date = dashboard.get('timeline', {}).get('end', 'N/A')
             
-            if 'status' in question.lower() or 'progress' in question.lower():
-                answer += f"The project is {completion}% complete."
-            elif 'risk' in question.lower():
-                risks = session_data.get('risks', [])
-                answer += f"I found {len(risks)} potential risks in this project."
-            elif 'critical' in question.lower() or 'path' in question.lower():
-                cp = session_data.get('critical_path', {})
-                answer += f"The critical path contains {len(cp.get('path', []))} tasks."
+            # Prepare project context for OpenAI
+            if use_openai_api:
+                # Create a project context summary for the AI
+                project_context = {
+                    "project_name": project_name,
+                    "task_count": task_count,
+                    "completion_percentage": completion,
+                    "timeline": {"start": start_date, "end": end_date},
+                    "critical_path_count": len(critical_path.get('critical_path', [])),
+                    "critical_path_duration": critical_path.get('total_duration', 0),
+                    "risks_summary": {
+                        "high_risks": len(risks.get('high_risks', [])),
+                        "medium_risks": len(risks.get('medium_risks', [])),
+                        "low_risks": len(risks.get('low_risks', []))
+                    },
+                    "status_distribution": dashboard.get('status_distribution', {}),
+                    "resource_allocation": dashboard.get('resource_allocation', {})
+                }
+                
+                # Make a call to the OpenAI API
+                try:
+                    # Define the API endpoint
+                    url = "https://api.openai.com/v1/chat/completions"
+                    
+                    # Set up headers with the API key
+                    headers = {
+                        "Authorization": f"Bearer {openai_api_key}",
+                        "Content-Type": "application/json"
+                    }
+                    
+                    # Prepare the messages for the API request
+                    messages = [
+                        {"role": "system", "content": f"You are an AI project management assistant specialized in analyzing project data. You have access to data about the project named '{project_name}'. Provide helpful, accurate, and concise information. Format your responses using basic HTML tags for better readability. Be professional and focus on project management insights."}
+                    ]
+                    
+                    # Add context about the project
+                    messages.append({"role": "system", "content": f"Project context: {json.dumps(project_context)}"}) 
+                    
+                    # Add the user's question
+                    messages.append({"role": "user", "content": question})
+                    
+                    # Prepare the request payload
+                    payload = {
+                        "model": "gpt-3.5-turbo",
+                        "messages": messages,
+                        "temperature": 0.7,
+                        "max_tokens": 700
+                    }
+                    
+                    # Make the API request
+                    api_response = requests.post(url, headers=headers, json=payload)
+                    response_data = api_response.json()
+                    
+                    # Extract the response from the API
+                    if api_response.status_code == 200 and 'choices' in response_data:
+                        # Use the API response
+                        api_content = response_data['choices'][0]['message']['content']
+                        # We'll return this API content later, for now we set response to it
+                        response = api_content
+                        using_api = True
+                    else:
+                        # If API call fails, fall back to simulated response
+                        print(f"OpenAI API error: {api_response.status_code}")
+                        print(f"Response data: {response_data}")
+                        # Will continue to generate simulated response
+                        using_api = False
+                except Exception as api_error:
+                    print(f"Error calling OpenAI API: {str(api_error)}")
+                    # Will continue to generate simulated response
+                    using_api = False
             else:
-                answer += "How can I help you analyze this project further?"
+                # API key not available or invalid, use simulated responses
+                using_api = False
+            
+            # If not using API, generate a simulated context-aware response
+            if not use_openai_api or (use_openai_api and not using_api):
+                if 'status' in question.lower() or 'progress' in question.lower():
+                    # Project status response
+                    status_dist = dashboard.get('status_distribution', {})
+                    completed = status_dist.get('Completed', 0)
+                    in_progress = status_dist.get('In Progress', 0)
+                    not_started = status_dist.get('Not Started', 0)
+                    
+                    response = f"<p>The project <strong>{project_name}</strong> is currently <strong>{completion}%</strong> complete.</p>"
+                    response += f"<p>Out of {task_count} tasks:</p>"
+                    response += f"<ul>"
+                    response += f"<li><strong>{completed}</strong> tasks completed</li>"
+                    response += f"<li><strong>{in_progress}</strong> tasks in progress</li>"
+                    response += f"<li><strong>{not_started}</strong> tasks not started</li>"
+                    response += f"</ul>"
+                    response += f"<p>The project is scheduled to run from <strong>{start_date}</strong> to <strong>{end_date}</strong>.</p>"
+                
+                elif 'risk' in question.lower() or 'risks' in question.lower():
+                    # Risk analysis response
+                    risk_categories = risks.get('risk_categories', {})
+                    high_risks = risks.get('high_risks', [])
+                    
+                    response = f"<p>I've analyzed the project risks and found:</p>"
+                    response += f"<ul>"
+                    
+                    if 'timeline_risks' in risk_categories:
+                        timeline_score = risk_categories.get('timeline_risks', {}).get('score', 0)
+                        response += f"<li>Timeline risk score: <strong>{timeline_score}/10</strong></li>"
+                    
+                    if 'dependency_risks' in risk_categories:
+                        dep_score = risk_categories.get('dependency_risks', {}).get('score', 0)
+                        response += f"<li>Dependency risk score: <strong>{dep_score}/10</strong></li>"
+                    
+                    if 'resource_risks' in risk_categories:
+                        res_score = risk_categories.get('resource_risks', {}).get('score', 0)
+                        response += f"<li>Resource risk score: <strong>{res_score}/10</strong></li>"
+                    
+                    response += f"</ul>"
+                    
+                    if high_risks:
+                        response += f"<p>The most critical risks to address are:</p>"
+                        response += f"<ul>"
+                        for i, risk in enumerate(high_risks[:3]):
+                            response += f"<li><strong>{risk.get('description', 'Risk ' + str(i+1))}</strong></li>"
+                        response += f"</ul>"
+                    else:
+                        response += f"<p>No critical risks were identified at this time.</p>"
+                
+                elif 'critical' in question.lower() and ('path' in question.lower() or 'tasks' in question.lower()):
+                    # Critical path response
+                    critical_tasks = critical_path.get('critical_path', [])
+                    total_duration = critical_path.get('total_duration', 0)
+                    duration_unit = critical_path.get('duration_unit', 'days')
+                    
+                    response = f"<p>The critical path consists of <strong>{len(critical_tasks)}</strong> tasks with a total duration of <strong>{total_duration} {duration_unit}</strong>.</p>"
+                    
+                    if critical_tasks:
+                        response += f"<p>Critical path tasks:</p>"
+                        response += f"<ol>"
+                        for task in critical_tasks[:5]:  # Limit to first 5 tasks to avoid overwhelming responses
+                            task_name = task.get('nom', task.get('name', 'Unnamed task'))
+                            task_duration = task.get('duree_estimee', 0)
+                            response += f"<li><strong>{task_name}</strong> ({task_duration} {duration_unit})</li>"
+                        
+                        if len(critical_tasks) > 5:
+                            response += f"<li>... and {len(critical_tasks) - 5} more tasks</li>"
+                        
+                        response += f"</ol>"
+                        response += f"<p>Any delay in these tasks will directly impact the project end date.</p>"
+                
+                elif 'resources' in question.lower() or 'resource allocation' in question.lower():
+                    # Resource allocation response
+                    resources = dashboard.get('resource_allocation', {})
+                    
+                    response = f"<p>Resource allocation for project <strong>{project_name}</strong>:</p>"
+                    
+                    if resources:
+                        response += f"<ul>"
+                        for resource, count in resources.items():
+                            response += f"<li><strong>{resource}</strong>: {count} tasks</li>"
+                        response += f"</ul>"
+                    else:
+                        response += f"<p>No resource allocation data available for this project.</p>"
+                
+                elif 'bottleneck' in question.lower() or 'constraint' in question.lower():
+                    # Bottleneck analysis
+                    advanced_schedule = session_data.get('advanced_schedule', {})
+                    bottlenecks = advanced_schedule.get('bottlenecks', [])
+                    
+                    if bottlenecks:
+                        response = f"<p>I've identified the following bottlenecks in your project:</p>"
+                        response += f"<ul>"
+                        for bottleneck in bottlenecks[:3]:
+                            task_name = bottleneck.get('task_name', 'Unnamed task')
+                            duration = bottleneck.get('duration', 0)
+                            impact = bottleneck.get('impact_factor', 1.0)
+                            response += f"<li><strong>{task_name}</strong> - Duration: {duration} days (Impact factor: {impact:.1f}x)</li>"
+                        response += f"</ul>"
+                        response += f"<p>These tasks are on the critical path and have durations significantly longer than average, making them potential bottlenecks.</p>"
+                    else:
+                        response = f"<p>No significant bottlenecks were identified in the critical path of your project.</p>"
+                
+                elif any(word in question.lower() for word in ['help', 'capability', 'can you', 'what can', 'features']):
+                    # Help response
+                    response = f"<p>I can help you analyze your project <strong>{project_name}</strong> in several ways:</p>"
+                    response += f"<ul>"
+                    response += f"<li>Provide project status and completion percentage</li>"
+                    response += f"<li>Analyze the critical path and identify bottlenecks</li>"
+                    response += f"<li>Assess risks and provide recommendations</li>"
+                    response += f"<li>Review resource allocation and constraints</li>"
+                    response += f"<li>Generate insights from project timeline</li>"
+                    response += f"</ul>"
+                    response += f"<p>What specific aspect of your project would you like me to analyze?</p>"
+                
+                else:
+                    # General project overview response
+                    response = f"<p>I've analyzed the project <strong>{project_name}</strong> with {task_count} tasks. The project is currently <strong>{completion}%</strong> complete and scheduled to run from {start_date} to {end_date}.</p>"
+                    
+                    # Add summary of critical path and risks
+                    total_cp_tasks = len(critical_path.get('critical_path', []))
+                    total_risks = len(risks.get('high_risks', [])) + len(risks.get('medium_risks', []))
+                    
+                    response += f"<p>The critical path consists of {total_cp_tasks} tasks, and I've identified {total_risks} potential risks.</p>"
+                    response += f"<p>To get more specific information, you can ask me about project status, critical path, risks, or resource allocation.</p>"
+        
         else:
             # No session data available
-            answer = "Please upload a project or load sample data first to get project-specific answers."
+            response = "<p>Please upload a project or load sample data first to get project-specific answers.</p>"
+            use_openai_api = False
         
-        # Return response
+        # Return response with proper format for frontend
         return jsonify({
             'success': True,
-            'answer': answer
+            'response': response,
+            'conversation_id': conversation_id,
+            'simulated': not (use_openai_api and 'using_api' in locals() and using_api)  # Only false if we actually used the API
         })
+        
     except Exception as e:
+        # Return error response with more details for debugging
+        error_message = str(e)
+        print(f"Error in ask_question: {error_message}")
+        traceback.print_exc()
         return jsonify({
             'success': False,
-            'message': f'Error processing question: {str(e)}'
+            'response': f"<p>Sorry, I encountered an error while processing your question.</p><p>Error details: {error_message}</p>",
+            'error': "Could not process your question. Please try again.",
+            'conversation_id': conversation_id if 'conversation_id' in locals() else str(uuid.uuid4()),
+            'simulated': True
         }), 500
 
 def cleanup_expired_sessions():
